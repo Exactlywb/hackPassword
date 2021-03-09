@@ -1,0 +1,233 @@
+Turbo Assembler	 Version 4.1	    03/09/21 16:38:47	    Page 1
+hackpass.asm
+
+
+
+      1	0000			     .model tiny
+      2
+      3	0000			     .code
+      4
+      5				     org 100h
+      6
+      7	0100			     Start:
+      8	0100  E8 0052				     call Greetings
+      9	0103  E8 000B				     call EnterPassword
+     10
+     11	0106  3D 0001				     cmp ax, 1
+     12
+     13	0109  74 5F				     je	 CorrectPass
+     14	010B  EB 54 90				     jmp WrongPass
+     15
+     16	010E  EB 63 90				     jmp Exit
+     17
+     18	0111			     EnterPassword   proc
+     19
+     20	0111  BA 001Dr				     mov dx, offset showMeUrPass
+     21	0114  E8 0045				     call PrintPhrase
+     22
+     23	0117  E8 0004				     call Scanner
+     24	011A  E8 001B				     call Checker
+     25
+     26	011D  C3				     ret
+     27
+     28	011E					     endp
+     29
+     30	011E			     Scanner	     proc
+     31
+     32	011E  33 C9				     xor cx, cx
+     33
+     34	0120  BB 008Cr				     lea bx, passBuf
+     35	0123  B4 01				     mov ah, 1h
+     36
+     37	0125			     TillNotEndScanning:
+     38	0125  CD 21				     int 21h
+     39
+     40	0127  3C 0D				     cmp al, 0dh				     ; enter scan code
+     41	0129  74 0C				     je	EndScanning
+     42
+     43	012B  83 F9 1E 90			     cmp cx, maxPassLength
+     44	012F  74 30				     je	WrongPass
+     45
+     46	0131  88 07				     mov [bx], al
+     47
+     48	0133  43				     inc bx
+     49	0134  41				     inc cx
+     50
+     51	0135  EB EE				     jmp TillNotEndScanning
+     52
+     53	0137			     EndScanning:
+     54	0137  C3				     ret
+     55	0138					     endp
+     56
+     57	0138			     Checker	     proc
+Turbo Assembler	 Version 4.1	    03/09/21 16:38:47	    Page 2
+hackpass.asm
+
+
+
+     58
+     59	0138  BE 0080r				     lea si, password
+     60	013B  BF 008Cr				     lea di, passBuf
+     61
+     62	013E  83 F9 0C 90			     cmp cx, passwordLength
+     63	0142  75 1D				     jne WrongPass
+     64
+     65	0144  49				     dec cx
+     66
+     67	0145			     Comparator:
+     68	0145  8B 1C				     mov bx, [si]
+     69	0147  8B 05				     mov ax, [di]
+     70
+     71	0149  3B D8				     cmp bx, ax
+     72	014B  75 14				     jne WrongPass
+     73
+     74	014D  46				     inc si
+     75	014E  47				     inc di
+     76
+     77	014F  E2 F4				     loop Comparator
+     78
+     79	0151  B8 0001				     mov ax, 1
+     80
+     81	0154  C3				     ret
+     82	0155					     endp
+     83
+     84				     ;----------------------------------------------------------
+     85				     ;Here we call print with our welcome phrase
+     86				     ;
+     87				     ;Destr: dx, ah
+     88				     ;
+     89				     ;Entry: none
+     90				     ;
+     91				     ;Ret: none
+     92				     ;----------------------------------------------------------
+     93	0155			     Greetings	     proc
+     94
+     95	0155  BA 0000r				     mov dx, offset welcomePhrase
+     96	0158  E8 0001				     call PrintPhrase
+     97
+     98	015B  C3				     ret
+     99	015C					     endp
+    100				     ;----------------------------------------------------------
+    101				     ;Here we print our	string
+    102				     ;
+    103				     ;Entry: dx
+    104				     ;
+    105				     ;Destr: ah
+    106				     ;
+    107				     ;Ret: none
+    108				     ;----------------------------------------------------------
+    109	015C			     PrintPhrase     proc
+    110
+    111	015C  B4 09				     mov ah, 09h
+    112	015E  CD 21				     int 21h
+    113
+    114	0160  C3				     ret
+Turbo Assembler	 Version 4.1	    03/09/21 16:38:47	    Page 3
+hackpass.asm
+
+
+
+    115
+    116	0161					     endp
+    117
+    118	0161			     WrongPass:
+    119	0161  BA 0039r				     mov dx, offset wrongPasswordPhrase
+    120	0164  E8 FFF5				     call PrintPhrase
+    121
+    122	0167  EB 0A 90				     jmp Exit
+    123
+    124	016A			     CorrectPass:
+    125	016A  BA 0054r				     mov dx, offset correctPasswordPhrase
+    126	016D  E8 FFEC				     call PrintPhrase
+    127
+    128	0170  EB 01 90				     jmp Exit
+    129
+    130				     ;-----------------------------------------------------------
+    131				     ;Exit from	the program
+    132				     ;-----------------------------------------------------------
+    133	0173			     Exit:
+    134	0173  B8 4C00				     mov ax, 4c00h
+    135	0176  CD 21				     int 21h
+    136
+    137	0178			     .data
+    138	0000  57 65 6C 63 6F 6D	65+		     welcomePhrase	     db	     'Welcome to the club, buddy', 0dh,	10, '$'
+    139	      20 74 6F 20 74 68	65+
+    140	      20 63 6C 75 62 2C	20+
+    141	      62 75 64 64 79 0D	0A+
+    142	      24
+    143	001D  53 68 6F 77 20 6D	65+		     showMeUrPass	     db	     'Show me your big password', 0dh, 10, '$'
+    144	      20 79 6F 75 72 20	62+
+    145	      69 67 20 70 61 73	73+
+    146	      77 6F 72 64 0D 0A	24
+    147
+    148	0039  0D 0A 59 6F 75 72	20+		     wrongPasswordPhrase     db	     0dh, 10,'Your password is wrong!',	0dh, '$'
+    149	      70 61 73 73 77 6F	72+
+    150	      64 20 69 73 20 77	72+
+    151	      6F 6E 67 21 0D 24
+    152	0054  43 6F 6E 67 72 61	74+		     correctPasswordPhrase   db	     'Congratulations! Your password is	correct!',  +
+    153	      75 6C 61 74 69 6F	6E+  0dh, '$'
+    154	      73 21 20 59 6F 75	72+
+    155	      20 70 61 73 73 77	6F+
+    156	      72 64 20 69 73 20	63+
+    157	      6F 72 72 65 63 74	21+
+    158	      0D 24
+    159
+    160	0080  44 65 64 20 6E 61	20+		     password		     db	     'Ded na drone'
+    161	      64 72 6F 6E 65
+    162	      =000C				     passwordLength	     =	     $ - password
+    163
+    164	      =001E				     maxPassLength	     =	     30
+    165	008C  1E*(00)				     passBuf		     db	     maxPassLength   dup (0)
+    166
+    167				     end Start
+Turbo Assembler	 Version 4.1	    03/09/21 16:38:47	    Page 4
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03/09/21"
+??FILENAME			  Text	 "hackpass"
+??TIME				  Text	 "16:38:47"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _DATA
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 HACKPASS
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+CHECKER				  Near	 DGROUP:0138
+COMPARATOR			  Near	 DGROUP:0145
+CORRECTPASS			  Near	 DGROUP:016A
+CORRECTPASSWORDPHRASE		  Byte	 DGROUP:0054
+ENDSCANNING			  Near	 DGROUP:0137
+ENTERPASSWORD			  Near	 DGROUP:0111
+EXIT				  Near	 DGROUP:0173
+GREETINGS			  Near	 DGROUP:0155
+MAXPASSLENGTH			  Number 001E
+PASSBUF				  Byte	 DGROUP:008C
+PASSWORD			  Byte	 DGROUP:0080
+PASSWORDLENGTH			  Number 000C
+PRINTPHRASE			  Near	 DGROUP:015C
+SCANNER				  Near	 DGROUP:011E
+SHOWMEURPASS			  Byte	 DGROUP:001D
+START				  Near	 DGROUP:0100
+TILLNOTENDSCANNING		  Near	 DGROUP:0125
+WELCOMEPHRASE			  Byte	 DGROUP:0000
+WRONGPASS			  Near	 DGROUP:0161
+WRONGPASSWORDPHRASE		  Byte	 DGROUP:0039
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  00AA Word	  Public  DATA
+  _TEXT				  16  0178 Word	  Public  CODE
+
